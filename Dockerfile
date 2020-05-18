@@ -1,6 +1,8 @@
-FROM ubuntu:18.04 AS package_step
+FROM ubuntu:18.04
 
 ENV GIT_SSL_NO_VERIFY true
+
+WORKDIR "/root"
 
 RUN apt-get update && \
   apt-get install -y python3-dev && \
@@ -21,16 +23,13 @@ RUN apt-get update && \
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # copy dotfiles
-COPY ".bashrc" ".vimrc" ".zshrc" ".fzf.zsh" "/root/"
-COPY ".oh-my-zsh" "/root/.oh-my-zsh"
-COPY ".z" "/root/.z"
-COPY ".vim" "/root/.vim"
+COPY . .
 
 # setup vim plugins
-RUN cd ${HOME}/.vim/bundle/YouCompleteMe && python3 install.py && vim +PlugInstall +qall
+RUN cd .vim/bundle/YouCompleteMe && python3 install.py && vim +PlugInstall +qall
 
 # install fzf
-RUN git clone --depth 1 https://github.com/junegunn/fzf.git ${HOME}/.fzf && ${HOME}/.fzf/install
+RUN git clone --depth 1 https://github.com/junegunn/fzf.git .fzf && .fzf/install
 
 # install fx
 RUN curl -sL -o fx https://github.com/antonmedv/fx/releases/download/18.0.1/fx-linux.zip && \
@@ -42,7 +41,7 @@ ARG GO_VERSION=1.13.9
 
 RUN wget https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz && \
   tar -C /usr/local -xvf go${GO_VERSION}.linux-amd64.tar.gz && \
-  mkdir -p /root/go/bin
+  mkdir -p go/bin
 
 ENV GOPATH="/root/go"
 ENV PATH="${PATH}:/usr/local/go/bin:/root/go/bin"
@@ -93,4 +92,4 @@ RUN zsh --version && echo === && \
   helm version --client && echo === && \
   smctl version && echo === 
 
-CMD zsh
+ENTRYPOINT zsh
